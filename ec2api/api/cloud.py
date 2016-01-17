@@ -977,22 +977,13 @@ class CloudController(object):
             true if the request succeeds.
         """
 
-    @module_and_param_types(image, 'strs', 'amiariaki_ids',
-                            'strs', 'filter')
-    def describe_images(self, context, executable_by=None, image_id=None,
-                        owner=None, filter=None):
+    @module_and_param_types(image, 'amiariaki_ids')
+    def describe_images(self, context, image_id=None):
         """Describes one or more of the images available to you.
 
         Args:
             context (RequestContext): The request context.
-            executable_by (list of str): Filters the images by users with
-                explicit launch permissions.
-                Not used now.
             image_id (list of str): One or more image IDs.
-            owner (list of str): Filters the images by the owner.
-                Not used now.
-            filter (list of filter dict): You can specify filters so that the
-                response includes information for only certain images.
 
         Returns:
             A list of images.

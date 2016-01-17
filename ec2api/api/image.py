@@ -234,6 +234,7 @@ def deregister_image(context, image_id):
 class ImageDescriber(common.TaggableItemsDescriber):
 
     KIND = 'ami'
+    # We are not supporting any filters for initial release
     FILTER_MAP = {'architecture': 'architecture',
                   'block-device-mapping.device-name': ['blockDeviceMapping',
                                                        'deviceName'],
@@ -332,8 +333,8 @@ class ImageDescriber(common.TaggableItemsDescriber):
         return db_api.get_tags(self.context, ('ami', 'ari', 'aki'), self.ids)
 
 
-def describe_images(context, executable_by=None, image_id=None,
-                    owner=None, filter=None):
+def describe_images(context, image_id=None):
+    filter=None
     formatted_images = ImageDescriber().describe(
         context, ids=image_id, filter=filter)
     return {'imagesSet': formatted_images}
@@ -495,7 +496,6 @@ def _check_owner(context, os_image):
 def _format_image(context, image, os_image, images_dict, ids_dict,
                   snapshot_ids=None):
     ec2_image = {'imageId': image['id'],
-                 'imageOwnerId': os_image.owner,
                  'imageType': IMAGE_TYPES[
                                    ec2utils.get_ec2_id_kind(image['id'])],
                  'isPublic': os_image.is_public,
@@ -521,23 +521,21 @@ def _format_image(context, image, os_image, images_dict, ids_dict,
                 items_by_os_id=images_dict, ids_by_os_id=ids_dict)
 
     name = os_image.name
-    img_loc = os_image.properties.get('image_location')
-    if img_loc:
-        ec2_image['imageLocation'] = img_loc
-    else:
-        ec2_image['imageLocation'] = "%s (%s)" % (img_loc, name)
-    if not name and img_loc:
-        # This should only occur for images registered with ec2 api
-        # prior to that api populating the glance name
-        ec2_image['name'] = img_loc
-    else:
+    # Glance allows image names to be empty
+    if name:
         ec2_image['name'] = name
+    else:
+        # Corner case: no image name which is allowed in glance
+        ec2_image['name'] = ""
 
     _prepare_mappings(os_image)
     properties = os_image.properties
+
+    # Commenting the root device name and root device type from the response
+    # Will remove any dead code in next iteration
     root_device_name = _block_device_properties_root_device_name(properties)
     if root_device_name:
-        ec2_image['rootDeviceName'] = root_device_name
+        # ec2_image['rootDeviceName'] = root_device_name
 
         root_device_type = 'instance-store'
         short_root_device_name = instance_api._block_device_strip_dev(
@@ -551,7 +549,7 @@ def _format_image(context, image, os_image, images_dict, ids_dict,
                             bdm.get('device_name')))):
                 root_device_type = 'ebs'
                 break
-        ec2_image['rootDeviceType'] = root_device_type
+        # ec2_image['rootDeviceType'] = root_device_type
 
     _cloud_format_mappings(context, properties, ec2_image,
                            root_device_name, snapshot_ids, os_image.owner)
