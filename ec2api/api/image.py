@@ -521,6 +521,14 @@ def _format_image(context, image, os_image, images_dict, ids_dict,
                 items_by_os_id=images_dict, ids_by_os_id=ids_dict)
 
     name = os_image.name
+    # Commenting out the image location code as it is not required
+    # in the first release
+    # img_loc = os_image.properties.get('image_location')
+    # if img_loc:
+    #     ec2_image['imageLocation'] = img_loc
+    # else:
+    #     ec2_image['imageLocation'] = "%s (%s)" % (img_loc, name)
+
     # Glance allows image names to be empty
     if name:
         ec2_image['name'] = name
