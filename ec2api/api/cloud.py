@@ -513,6 +513,18 @@ class CloudController(object):
         once, each call succeeds.
         """
 
+    @module_and_param_types(instance, 'dummy')
+    def describe_instance_types(self, context, instance_type_id=None):
+        """Describes one or more of instance types.
+
+        Args:
+            context(RequestConext): The request context.
+            instance_type_id (list of str): One or more of instance type ids.
+
+        Returns:
+            A list of instance types,
+        """
+
     @module_and_param_types(instance, 'i_ids', 'filter',
                             'int', 'str')
     def describe_instances(self, context, instance_id=None, filter=None,
@@ -598,8 +610,11 @@ class CloudController(object):
             Specified attribute.
         """
 
-    @module_and_param_types(key_pair, 'str255s', 'filter')
-    def describe_key_pairs(self, context, key_name=None, filter=None):
+    # AK - Comment out filtersa and keynames from describe keypairs for now
+    #@module_and_param_types(key_pair, 'str255s', 'filter')
+    #def describe_key_pairs(self, context, key_name=None, filter=None):
+    @module_and_param_types(key_pair)
+    def describe_key_pairs(self, context):
         """Describes one or more of your key pairs.
 
         Args:
