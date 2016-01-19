@@ -105,6 +105,13 @@ def delete_volume(context, volume_id):
     # It will be deleted by describer in the future
     return True
 
+def show_delete_on_termination_flag(context, volume_id):
+    # return some dict
+    return True
+
+def update_delete_on_termination_flag(context, volume_id,
+        delete_on_termination):
+    return True
 
 class VolumeDescriber(common.TaggableItemsDescriber):
 
