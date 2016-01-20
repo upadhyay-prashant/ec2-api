@@ -384,9 +384,9 @@ class CloudController(object):
                             'ip', 'str64',
                             'dummy', 'dummy',
                             'bool')
-    def run_instances(self, context, image_id, min_count, max_count,
+    def run_instances(self, context, image_id, instance_count,
                       key_name=None, security_group_id=None,
-                      security_group=None, user_data=None, instance_type=None,
+                      security_group=None, user_data=None, instance_type_id=None,
                       placement=None, kernel_id=None, ramdisk_id=None,
                       block_device_mapping=None, monitoring=None,
                       subnet_id=None, disable_api_termination=None,
@@ -399,20 +399,16 @@ class CloudController(object):
         Args:
             context (RequestContext): The request context.
             image_id (str): The ID of the AMI.
-            min_count (int): The minimum number of instances to launch.
-                If you specify a minimum that is more instances than EC2 can
+            instance_count (int): The number of instances to launch.
+                If you specify a number that is more instances than EC2 can
                 launch in the target Availability Zone, EC2 launches no
                 instances.
-            max_count (int): The maximum number of instances to launch.
-                If you specify more instances than EC2 can launch in the target
-                Availability Zone, EC2 launches the largest possible number
-                of instances above max_count.
             key_name (str): The name of the key pair.
             security_group_id (list of str): One or more security group IDs.
             security_group (list of str): One or more security group names.
                 For VPC mode, you must use security_group_id.
             user_data (str): Base64-encoded MIME user data for the instances.
-            instance_type (str): The instance type.
+            instance_type_id (str): The instance type.
             placement (dict): Dict can contain:
                 availability_zone (str): Availability Zone for the instance.
                 group_name (str): The name of an existing placement group.
@@ -825,7 +821,6 @@ class CloudController(object):
         Returns:
             A list of volumes.
         """
-
     @module_and_param_types(snapshot, 'vol_id', 'str')
     def create_snapshot(self, context, volume_id, description=None):
         """Creates a snapshot of an EBS volume.
