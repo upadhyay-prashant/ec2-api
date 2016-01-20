@@ -821,37 +821,6 @@ class CloudController(object):
         Returns:
             A list of volumes.
         """
-    @module_and_param_types(volume, 'vol_id')
-    def show_delete_on_termination_flag(self, context, volume_id):
-        """Returns the value of delete on termination flag of a specified
-           volume
-
-        Args:
-            context (RequestContext): The request context.
-            volume_id (str): The ID of the volume.
-
-        Returns:
-            A data structure containing following
-            RequestID, DeleteOnTermination flag value, volume id and
-            instance id
-        """
-
-    @module_and_param_types(volume, 'vol_id', 'bool')
-    def update_delete_on_termination_flag(self, context, volume_id,
-        delete_on_termination):
-        """Updates the delete on termination flag for a volume
-
-        Args:
-            context (RequestContext): The request context.
-            volume_id (str): The ID of the volume.
-            delete_on_termination (bool): The value to be set (True or False)
-
-        Returns:
-            A data structure containing following
-            RequestID, DeleteOnTermination flag value, volume id and
-            instance id
-        """
-
     @module_and_param_types(snapshot, 'vol_id', 'str')
     def create_snapshot(self, context, volume_id, description=None):
         """Creates a snapshot of an EBS volume.
