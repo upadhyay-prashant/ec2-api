@@ -116,14 +116,11 @@ class APIRequest(object):
 
         xml.unlink()
 
-        # AK - Though openstack advises against writing private key,
-        #      as the AWS response does contain it, write the
-        #      response for now 
         # Don't write private key to log
-        #if self.action != "CreateKeyPair":
-        LOG.debug(response)
-        #else:
-        #    LOG.debug("CreateKeyPair: Return Private Key")
+        if self.action != "CreateKeyPair":
+            LOG.debug(response)
+        else:
+            LOG.debug("CreateKeyPair: Return Private Key")
 
         return response
 

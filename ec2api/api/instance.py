@@ -94,7 +94,7 @@ def run_instances(context, image_id, min_count, max_count,
         reservations = describe_instances(context,
                                           filter=[{'name': 'client-token',
                                                    'value': [client_token]}])
-        if reservations['instancesSet']:
+        if reservations['reservationSet']:
             if len(reservations['reservationSet']) > 1:
                 LOG.error(_LE('describe_instances has returned %s '
                               'reservations, but 1 is expected.') %
@@ -180,7 +180,7 @@ def run_instances(context, image_id, min_count, max_count,
     ec2_reservations = describe_instances(context, instance_ids)
     reservation_count = len(ec2_reservations['reservationSet'])
     if reservation_count != 1:
-        LOG.error(_LE('describe_instances has returned %s reservation, '
+        LOG.error(_LE('describe_instances has returned %s reservations, '
                       'but 1 is expected.') % reservation_count)
         LOG.error(_LE('Requested instances IDs: %s') % instance_ids)
         LOG.error(_LE('Result: %s') % ec2_reservations)
@@ -203,7 +203,7 @@ def terminate_instances(context, instance_id):
             os_instance = None
         else:
             os_instance.delete()
-        state_change = _format_state_change(instance, os_instance, prev_state)
+        state_change = _format_state_change(instance, prev_state)
         state_changes.append(state_change)
 
     # NOTE(ft): don't delete items from DB until they disappear from OS.
@@ -668,8 +668,7 @@ def _format_instance(context, instance, os_instance, ec2_network_interfaces,
     return ec2_instance
 
 
-def _format_state_change(instance, os_instance, prev_state=None,
-                         current_state=None):
+def _format_state_change(instance, prev_state=None, current_state=None):
     # Changing this function to receive the current and previous state
     # parameters
     if prev_state is None:
@@ -787,8 +786,8 @@ def _foreach_instance(context, instance_ids, valid_states, func,
     for os_instance, ec2_instance in zip(os_instances, instances):
         prev_state = getattr(os_instance, 'OS-EXT-STS:vm_state')
         func(os_instance)
-        state_change = _format_state_change(ec2_instance, os_instance,
-                                            prev_state, final_state)
+        state_change = _format_state_change(ec2_instance, prev_state,
+                                            final_state)
         state_changes.append(state_change)
     return {"instancesSet": state_changes}
 

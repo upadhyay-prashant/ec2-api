@@ -64,7 +64,7 @@ def show_delete_on_termination_flag(context, volume_id):
         response = nova.volumes.show_delete_on_termination_flag(volume_id)
         return {"volume": response._info}
     except (nova_exception.Conflict, nova_exception.BadRequest):
-        # TODO(andrey-mp): raise correct errors for different cases
+        # TODO(anant): raise correct errors for different cases
         raise exception.UnsupportedOperation()
 
 
@@ -81,7 +81,7 @@ def update_delete_on_termination_flag(context, volume_id,
                                                  str(delete_on_termination))
         return {"volume": response._info}
     except (nova_exception.Conflict, nova_exception.BadRequest):
-        # TODO(andrey-mp): raise correct errors for different cases
+        # TODO(anant): raise correct errors for different cases
         raise exception.UnsupportedOperation()
 
 
