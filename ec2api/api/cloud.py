@@ -735,6 +735,36 @@ class CloudController(object):
             The console output of the instance, timestamp and instance id.
         """
 
+    @module_and_param_types(volume, 'vol_id')
+    def show_delete_on_termination_flag(self, context, volume_id):
+        """Get the delete on termination flag on the volume id
+        to the given value.
+
+        Args:
+            volume_id: The ID of the volume to update
+
+        Returns:
+            The dict showing the volume id, attached instance id, and
+            delete on termination flag
+        """
+
+
+    @module_and_param_types(volume, 'vol_id', 'bool')
+    def update_delete_on_termination_flag(self, context, volume_id,
+                                          delete_on_termination):
+        """Update the delete on termination flag on the volume id
+        to the given value.
+
+        Args:
+            volume_id: The ID of the volume to update
+            delete_on_termination: Bool to set the flag
+
+        Returns:
+            The dict showing the volume id, attached instance id, and
+            delete on termination flag
+        """
+
+
     @module_and_param_types(volume, 'str', 'int',
                             'snap_id', 'str', 'int',
                             'bool', 'str')

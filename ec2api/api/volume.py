@@ -53,6 +53,38 @@ def create_volume(context, availability_zone=None, size=None,
     return _format_volume(context, volume, os_volume, snapshot_id=snapshot_id)
 
 
+def show_delete_on_termination_flag(context, volume_id):
+    volume = ec2utils.get_db_item(context, volume_id)
+    if not volume:
+        _msg = ("No volume found corresponding to volume_id=" + volume_id)
+        raise exception.InvalidRequest(_msg)
+    volume_id = volume['os_id']
+    nova = clients.nova(context)
+    try:
+        response = nova.volumes.show_delete_on_termination_flag(volume_id)
+        return {"volume": response._info}
+    except (nova_exception.Conflict, nova_exception.BadRequest):
+        # TODO(andrey-mp): raise correct errors for different cases
+        raise exception.UnsupportedOperation()
+
+
+def update_delete_on_termination_flag(context, volume_id, 
+                                   delete_on_termination):
+    volume = ec2utils.get_db_item(context, volume_id)
+    if not volume:
+        _msg = ("No volume found corresponding to volume_id=" + volume_id)
+        raise exception.InvalidRequest(_msg)
+    volume_id = volume['os_id']
+    nova = clients.nova(context)
+    try:
+        response = nova.volumes.update_delete_on_termination_flag(volume_id,
+                                                 str(delete_on_termination))
+        return {"volume": response._info}
+    except (nova_exception.Conflict, nova_exception.BadRequest):
+        # TODO(andrey-mp): raise correct errors for different cases
+        raise exception.UnsupportedOperation()
+
+
 def attach_volume(context, volume_id, instance_id, device):
     volume = ec2utils.get_db_item(context, volume_id)
     instance = ec2utils.get_db_item(context, instance_id)
