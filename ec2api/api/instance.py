@@ -195,14 +195,16 @@ def terminate_instances(context, instance_id):
 
     nova = clients.nova(context)
     state_changes = []
+    prev_state = None
     for instance in instances:
         try:
             os_instance = nova.servers.get(instance['os_id'])
+            prev_state = getattr(os_instance, 'OS-EXT-STS:vm_state')
         except nova_exception.NotFound:
             os_instance = None
         else:
             os_instance.delete()
-        state_change = _format_state_change(instance, os_instance)
+        state_change = _format_state_change(instance, prev_state)
         state_changes.append(state_change)
 
     # NOTE(ft): don't delete items from DB until they disappear from OS.
@@ -418,8 +420,35 @@ class ReservationDescriber(common.NonOpenstackItemsDescriber):
                 context, filter=reservation_filters)
 
 
-def describe_instances(context, instance_id=None, filter=None,
-                       max_results=None, next_token=None):
+def describe_instance_types(context, instance_type_id=None):
+    flavors = _get_os_flavors(context)
+    formatted_flavors = []
+    if instance_type_id is None:
+        instance_type_id = list(flavors.keys())
+    else:
+        flavors = dict((value, key) for key, value in flavors.iteritems())
+        instance_type_id_copy = instance_type_id
+        instance_type_id = []
+        for type_id in instance_type_id_copy:
+            key = flavors.get(type_id)
+            if key is None:
+                _msg = ("No InstanceType found with name \""
+                        + str(type_id) + "\".")
+                raise exception.InvalidParameterValue(_msg)
+            instance_type_id.append(key)
+    for key in instance_type_id:
+        os_flavors = clients.nova(context).flavors.get(key)
+        entry = dict()
+        entry['name'] = os_flavors.name
+        entry['id'] = os_flavors.id
+        entry['ram'] = os_flavors.ram
+        entry['vcpus'] = os_flavors.vcpus
+        entry['disk'] = os_flavors.disk
+        formatted_flavors.append(entry)
+    return {'instanceTypes': formatted_flavors}
+
+
+def describe_instances(context, instance_id=None, filter=None):
     formatted_reservations = ReservationDescriber().describe(
             context, ids=instance_id, filter=filter)
     return {'reservationSet': formatted_reservations}
@@ -429,19 +458,22 @@ def reboot_instances(context, instance_id):
     return _foreach_instance(context, instance_id,
                              (vm_states_ALLOW_SOFT_REBOOT +
                               vm_states_ALLOW_HARD_REBOOT),
-                             lambda instance: instance.reboot())
+                             lambda instance: instance.reboot(),
+                             vm_states_ACTIVE)
 
 
 def stop_instances(context, instance_id, force=False):
     return _foreach_instance(context, instance_id,
                              [vm_states_ACTIVE, vm_states_RESCUED,
                               vm_states_ERROR],
-                             lambda instance: instance.stop())
+                             lambda instance: instance.stop(),
+                             vm_states_STOPPED)
 
 
 def start_instances(context, instance_id):
     return _foreach_instance(context, instance_id, [vm_states_STOPPED],
-                             lambda instance: instance.start())
+                             lambda instance: instance.start(),
+                             vm_states_ACTIVE)
 
 
 def get_password_data(context, instance_id):
@@ -635,22 +667,17 @@ def _format_instance(context, instance, os_instance, ec2_network_interfaces,
     return ec2_instance
 
 
-def _format_state_change(instance, os_instance):
-    if os_instance:
-        prev_state = _cloud_state_description(getattr(os_instance,
-                                                      'OS-EXT-STS:vm_state'))
-        try:
-            os_instance.get()
-            curr_state = _cloud_state_description(
-                getattr(os_instance, 'OS-EXT-STS:vm_state'))
-        except nova_exception.NotFound:
-            curr_state = _cloud_state_description(vm_states_WIPED_OUT)
-    else:
-        prev_state = curr_state = _cloud_state_description(vm_states_WIPED_OUT)
+def _format_state_change(instance, prev_state=None, current_state=None):
+    # Changing this function to receive the current and previous state
+    # parameters
+    if prev_state is None:
+        prev_state = vm_states_WIPED_OUT
+    if current_state is None:
+        current_state = vm_states_WIPED_OUT
     return {
         'instanceId': instance['id'],
-        'previousState': prev_state,
-        'currentState': curr_state,
+        'previousState': _cloud_state_description(prev_state),
+        'currentState': _cloud_state_description(current_state)
     }
 
 
@@ -754,7 +781,8 @@ def _get_ip_info_for_instance(os_instance):
     return fixed_ip, fixed_ip6, floating_ip
 
 
-def _foreach_instance(context, instance_ids, valid_states, func):
+def _foreach_instance(context, instance_ids, valid_states, func, 
+                      final_state=None):
     instances = ec2utils.get_db_items(context, 'i', instance_ids)
     os_instances = _get_os_instances_by_instances(context, instances,
                                                   exactly=True)
@@ -763,9 +791,14 @@ def _foreach_instance(context, instance_ids, valid_states, func):
             raise exception.IncorrectInstanceState(
                 instance_id=next(inst['id'] for inst in instances
                                  if inst['os_id'] == os_instance.id))
-    for os_instance in os_instances:
+    state_changes = []
+    for os_instance, ec2_instance in zip(os_instances, instances):
+        prev_state = getattr(os_instance, 'OS-EXT-STS:vm_state')
         func(os_instance)
-    return True
+        state_change = _format_state_change(ec2_instance, prev_state,
+                                            final_state)
+        state_changes.append(state_change)
+    return {"instancesSet": state_changes}
 
 
 def _get_os_instances_by_instances(context, instances, exactly=False,

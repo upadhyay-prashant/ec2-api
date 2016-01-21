@@ -509,6 +509,18 @@ class CloudController(object):
         once, each call succeeds.
         """
 
+    @module_and_param_types(instance, 'dummy')
+    def describe_instance_types(self, context, instance_type_id=None):
+        """Describes one or more of instance types.
+
+        Args:
+            context(RequestConext): The request context.
+            instance_type_id (list of str): One or more of instance type ids.
+
+        Returns:
+            A list of instance types,
+        """
+
     @module_and_param_types(instance, 'i_ids', 'filter',
                             'int', 'str')
     def describe_instances(self, context, instance_id=None, filter=None,
@@ -594,8 +606,11 @@ class CloudController(object):
             Specified attribute.
         """
 
-    @module_and_param_types(key_pair, 'str255s', 'filter')
-    def describe_key_pairs(self, context, key_name=None, filter=None):
+    # AK - Comment out filtersa and keynames from describe keypairs for now
+    #@module_and_param_types(key_pair, 'str255s', 'filter')
+    #def describe_key_pairs(self, context, key_name=None, filter=None):
+    @module_and_param_types(key_pair)
+    def describe_key_pairs(self, context):
         """Describes one or more of your key pairs.
 
         Args:
@@ -715,6 +730,36 @@ class CloudController(object):
         Returns:
             The console output of the instance, timestamp and instance id.
         """
+
+    @module_and_param_types(volume, 'vol_id')
+    def show_delete_on_termination_flag(self, context, volume_id):
+        """Get the delete on termination flag on the volume id
+        to the given value.
+
+        Args:
+            volume_id: The ID of the volume to update
+
+        Returns:
+            The dict showing the volume id, attached instance id, and
+            delete on termination flag
+        """
+
+
+    @module_and_param_types(volume, 'vol_id', 'bool')
+    def update_delete_on_termination_flag(self, context, volume_id,
+                                          delete_on_termination):
+        """Update the delete on termination flag on the volume id
+        to the given value.
+
+        Args:
+            volume_id: The ID of the volume to update
+            delete_on_termination: Bool to set the flag
+
+        Returns:
+            The dict showing the volume id, attached instance id, and
+            delete on termination flag
+        """
+
 
     @module_and_param_types(volume, 'str', 'int',
                             'snap_id', 'str', 'int',
