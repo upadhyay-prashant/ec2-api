@@ -48,8 +48,8 @@ def utf8(value):
 
 def ec2_error_response(request_id, code, message, status=500):
     """Helper to construct an EC2 compatible error response."""
-    LOG.debug('EC2 error response: %(code)s: %(message)s',
-              {'code': code, 'message': message})
+    LOG.debug('EC2 error response : [%(request)s] : %(code)s: %(message)s',
+              {'request': request_id , 'code': code, 'message': message})
     resp = webob.Response()
     resp.status = status
     resp.headers['Content-Type'] = 'text/xml'

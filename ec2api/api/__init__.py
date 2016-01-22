@@ -27,6 +27,7 @@ import six
 import webob
 import webob.dec
 import webob.exc
+import policy_engine
 
 from ec2api.api import apirequest
 from ec2api.api import ec2utils
@@ -46,6 +47,9 @@ ec2_opts = [
     cfg.StrOpt('keystone_ec2_tokens_url',
                default='$keystone_url/ec2tokens',
                help='URL to get token from ec2 request.'),
+    cfg.StrOpt('mapping_file',
+               default='mapping.json',
+               help='The JSON file that defines action resource mapping'),
     cfg.IntOpt('ec2_timestamp_expiry',
                default=300,
                help='Time in seconds before ec2 timestamp expires'),
@@ -124,6 +128,10 @@ class EC2KeystoneAuth(wsgi.Middleware):
 
     """Authenticate an EC2 request with keystone and convert to context."""
 
+    def __init__(self, local_config):
+        super(EC2KeystoneAuth, self).__init__(local_config)
+        self.policy_engine = policy_engine.PolicyEngine(CONF.mapping_file)
+
     def _get_signature(self, req):
         """Extract the signature from the request.
 
@@ -199,6 +207,22 @@ class EC2KeystoneAuth(wsgi.Middleware):
             # Not part of authentication args
             params.pop('Signature', None)
 
+        try:
+            rsrc_action_list = self.policy_engine.handle_params(
+                                                dict(req.params))
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            LOG.exception(str(e))
+            if isinstance(exc_obj, webob.exc.HTTPUnauthorized):
+                return faults.ec2_error_response(request_id, 'AuthFailure',
+                                            str(e), status=403)
+            elif isinstance(exc_obj, webob.exc.HTTPInternalServerError):
+                return faults.ec2_error_response(request_id, 'InternalError',
+                                            str(e), status=500)
+            else:
+                return faults.ec2_error_response(request_id, 'BadRequest',
+                                            str(e), status=400)
+
         cred_dict = {
             'access': access,
             'signature': signature,
@@ -207,7 +231,8 @@ class EC2KeystoneAuth(wsgi.Middleware):
             'path': req.path,
             'params': params,
             'headers': req.headers,
-            'body_hash': body_hash
+            'body_hash': body_hash,
+            'policy_list': rsrc_action_list
         }
 
         token_url = CONF.keystone_ec2_tokens_url
