@@ -439,8 +439,8 @@ def describe_instance_types(context, instance_type_id=None):
     for key in instance_type_id:
         os_flavors = clients.nova(context).flavors.get(key)
         entry = dict()
-        entry['name'] = os_flavors.name
-        entry['id'] = os_flavors.id
+        #entry['name'] = os_flavors.name
+        entry['id'] = os_flavors.name
         entry['ram'] = os_flavors.ram
         entry['vcpus'] = os_flavors.vcpus
         entry['disk'] = os_flavors.disk
