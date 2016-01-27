@@ -79,7 +79,7 @@ def get_instance_engine():
 
 def run_instances(context, image_id, instance_count,
                   key_name=None, security_group_id=None,
-                  security_group=None, user_data=None, instance_type=None,
+                  security_group=None, user_data=None, instance_type_id=None,
                   placement=None, kernel_id=None, ramdisk_id=None,
                   block_device_mapping=None, monitoring=None,
                   subnet_id=None, disable_api_termination=None,
@@ -110,13 +110,13 @@ def run_instances(context, image_id, instance_count,
 
     nova = clients.nova(context)
     try:
-        if instance_type is None:
-            instance_type = CONF.default_flavor
+        if instance_type_id is None:
+            instance_type_id = CONF.default_flavor
         os_flavor = next(f for f in nova.flavors.list()
-                         if f.name == instance_type)
+                         if f.name == instance_type_id)
     except StopIteration:
-        raise exception.InvalidParameterValue(value=instance_type,
-                                              parameter='InstanceType')
+        raise exception.InvalidParameterValue(value=instance_type_id,
+                                              parameter='InstanceTypeId')
 
     bdm = _parse_block_device_mapping(context, block_device_mapping)
     availability_zone = (placement or {}).get('availability_zone')

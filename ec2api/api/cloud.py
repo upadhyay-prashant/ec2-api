@@ -374,7 +374,7 @@ class CloudController(object):
         This action doesn't apply to security groups for use in EC2-Classic.
         """
 
-    @module_and_param_types(instance, 'ami_id', 'int', 'int',
+    @module_and_param_types(instance, 'ami_id', 'int',
                             'str255', 'sg_ids',
                             'security_group_strs', 'str', 'str',
                             'dummy', 'aki_id', 'ari_id',
