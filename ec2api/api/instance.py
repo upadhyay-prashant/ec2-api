@@ -116,7 +116,7 @@ def run_instances(context, image_id, instance_count,
                          if f.name == instance_type_id)
     except StopIteration:
         raise exception.InvalidParameterValue(value=instance_type_id,
-                                              parameter='InstanceType')
+                                              parameter='InstanceTypeId')
 
     bdm = _parse_block_device_mapping(context, block_device_mapping)
     availability_zone = (placement or {}).get('availability_zone')
