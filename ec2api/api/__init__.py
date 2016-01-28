@@ -56,7 +56,7 @@ ec2_opts = [
                default=False,
                help='Flag to enable/disable action-resource list for auth.'),
     cfg.ListOpt('supported_api_versions',
-                default=['01-03-2016'],
+                default=['2016-03-01'],
                 help='List of JCS Versions supported by code.'),
 ]
 
@@ -199,8 +199,7 @@ class EC2KeystoneAuth(wsgi.Middleware):
         # Verify the version is as expected from config file
         req_version = req.params.get('Version')
         if not req_version or req_version not in CONF.supported_api_versions:
-            _msg = ("Unsupported Version used in the request. Supported "
-                    "versions are " + str(CONF.supported_api_versions))
+            _msg = ("Unsupported Version used in the request.")
             return faults.ec2_error_response(request_id, 'BadRequest',
                                              _msg, status=400)
 
