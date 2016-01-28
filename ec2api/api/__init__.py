@@ -55,6 +55,9 @@ ec2_opts = [
     cfg.BoolOpt('enable_policy_engine',
                default=False,
                help='Flag to enable/disable action-resource list for auth.'),
+    cfg.ListOpt('supported_api_versions',
+                default=['2016-03-01'],
+                help='List of JCS Versions supported by code.'),
 ]
 
 CONF = cfg.CONF
@@ -192,6 +195,13 @@ class EC2KeystoneAuth(wsgi.Middleware):
         # subsequent access to request modifies the req.body so the hash
         # calculation will yield invalid results.
         body_hash = hashlib.sha256(req.body).hexdigest()
+
+        # Verify the version is as expected from config file
+        req_version = req.params.get('Version')
+        if not req_version or req_version not in CONF.supported_api_versions:
+            _msg = ("Unsupported Version used in the request.")
+            return faults.ec2_error_response(request_id, 'BadRequest',
+                                             _msg, status=400)
 
         signature = self._get_signature(req)
         if not signature:
