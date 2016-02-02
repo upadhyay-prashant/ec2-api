@@ -98,8 +98,12 @@ def attach_volume(context, volume_id, instance_id, device):
         raise exception.UnsupportedOperation()
     cinder = clients.cinder(context)
     os_volume = cinder.volumes.get(volume['os_id'])
+    # [varun]: Sending delete on termination as false (last param below)
+    # when volume is attached delete on termination flag will be false by
+    # default therefore sending false to make consistent with AWS
     return _format_attachment(context, volume, os_volume,
-                              instance_id=instance_id)
+                              instance_id=instance_id,
+                              delete_on_termination_flag=False)
 
 
 def detach_volume(context, volume_id, instance_id=None, device=None,
@@ -119,8 +123,12 @@ def detach_volume(context, volume_id, instance_id=None, device=None,
     os_volume.get()
     instance_id = next((i['id'] for i in db_api.get_items(context, 'i')
                         if i['os_id'] == os_instance_id), None)
+    # [varun]: Sending delete on termination as false (last param below)
+    # when volume is detached delete on termination flag does not make sense
+    # therefore sending false to make consistent with AWS
     return _format_attachment(context, volume, os_volume,
-                              instance_id=instance_id)
+                              instance_id=instance_id,
+                              delete_on_termination_flag=False)
 
 
 def delete_volume(context, volume_id):
@@ -208,7 +216,7 @@ def _format_volume(context, volume, os_volume, instances={},
 
 
 def _format_attachment(context, volume, os_volume, instances={},
-                       instance_id=None):
+                       instance_id=None, delete_on_termination_flag=False):
     os_attachment = next(iter(os_volume.attachments), {})
     os_instance_id = os_attachment.get('server_id')
     if not instance_id and os_instance_id:
@@ -221,5 +229,6 @@ def _format_attachment(context, volume, os_volume, instances={},
             'status': (os_volume.status
                        if os_volume.status in ('attaching', 'detaching') else
                        'attached' if os_attachment else 'detached'),
-            'volumeId': volume['id']}
+            'volumeId': volume['id'],
+            'deleteOnTermination': delete_on_termination_flag}
     return ec2_attachment
